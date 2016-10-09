@@ -11,7 +11,7 @@ from chainer.training import extensions
 #define model
 class Autoencoder(chainer.Chain):
     def __init__(self):
-        super.__init__(Autoencoder, self):
+        super(Autoencoder, self).__init__(
             encoder = L.Linear(784, 64),
             decoder = L.Linear(64, 784),
             )
