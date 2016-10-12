@@ -43,7 +43,7 @@ class ParallelSequentialIterator(chainer.dataset.Iterator):
     def get_words(self):
         return [self.dataset[(offset + self.iteration) % len(self.dataset)] for offset in self.offsets]
 
-    def serialize(self):
+    def serialize(self, serializer):
         self.iteration = serializer('iteration', self.iteration)
         self.epoch = serializer('epoch', self.epoch)
 
