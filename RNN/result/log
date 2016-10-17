@@ -1,0 +1,14 @@
+[
+    {
+        "epoch": 0,
+        "iteration": 500,
+        "perplexity": 707.2850676911728,
+        "main/loss": 6.561433792114258
+    },
+    {
+        "epoch": 0,
+        "iteration": 1000,
+        "perplexity": 293.2824480756332,
+        "main/loss": 5.681136131286621
+    }
+]

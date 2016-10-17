@@ -7,8 +7,9 @@ import chainer.functions as F
 import chainer.links as L
 from chainer import training
 from chainer.training import extensions
+from ptb import RNNForLM
 
-class ParalellSequentialIterator(chainer.dataset.Iteretor):
+class ParallelSequentialIterator(chainer.dataset.Iterator):
 
     def __init__(self, dataset, batch_size, repeat=True):
         self.dataset = dataset
@@ -21,12 +22,12 @@ class ParalellSequentialIterator(chainer.dataset.Iteretor):
         self.iteration = 0
 
     def __next__(self):
-        length = len(dataset)
+        length = len(self.dataset)
         if not self.repeat and self.iteration * self.batch_size >= length:
-            raise StopIteretion
-        cur_words = get_words()
+            raise StopIteration
+        cur_words = self.get_words()
         self.iteration += 1
-        next_words = get_words()
+        next_words = self.get_words()
 
         epoch = self.iteration * self.batch_size // length
         self.is_new_epoch = self.epoch < epoch
@@ -42,7 +43,7 @@ class ParalellSequentialIterator(chainer.dataset.Iteretor):
     def get_words(self):
         return [self.dataset[(offset + self.iteration) % len(self.dataset)] for offset in self.offsets]
 
-    def serialize(self):
+    def serialize(self, serializer):
         self.iteration = serializer('iteration', self.iteration)
         self.epoch = serializer('epoch', self.epoch)
 
@@ -98,7 +99,7 @@ def main():
                         help='Number of LSTM units in each layer')
     args = parser.parse_args()
 
-    train, val, test = cainer.datasets.get_ptb_words()
+    train, val, test = chainer.datasets.get_ptb_words()
     n_vocab = max(train) + 1
     print('#vocab =', n_vocab)
 
@@ -111,7 +112,7 @@ def main():
     model.compute_accuracy = False
     if args.gpu >= 0:
         chainer.cuda.get_device(args.gpu).use()
-        model.tu_gpu()
+        model.to_gpu()
 
     optimizer = chainer.optimizers.SGD(lr=1.0)
     optimizer.setup(model)
@@ -142,6 +143,9 @@ def main():
         chainer.serializers.load_npz(args.resume, trainer)
 
     trainer.run()
+
+    serializers.save_npz('model.npz', model)
+    serializers.save_npz('optimizer.npz', optimizer)
 
     print('test')
     eval_rnn.reset_state()

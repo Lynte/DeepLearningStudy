@@ -11,7 +11,7 @@ from chainer.training import extensions
 class RNNForLM(chainer.Chain):
 
     def __init__(self, n_vocab, n_units, train=True):
-        super(RNNforLM, self).__init__(
+        super(RNNForLM, self).__init__(
                 embed = L.EmbedID(n_vocab, n_units),
                 l1 = L.LSTM(n_units, n_units),
                 l2 = L.LSTM(n_units, n_units),
