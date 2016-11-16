@@ -108,8 +108,8 @@ def main():
         chainer.cuda.get_device(args.gpu).use()
         model.to_gpu()
 
-    train = get_dataset(80, 3)
-    test = get_dataset(20, 3)
+    train = get_dataset(100, 3)
+    test = get_dataset(100, 3)
 
     train_iter = LSTM_Iterator(train, batch_size=10, bprop_len=10)
     test_iter = LSTM_Iterator(test, batch_size=10, bprop_len=10, repeat=False)
