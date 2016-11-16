@@ -115,7 +115,7 @@ def main():
     test_iter = LSTM_Iterator(test, batch_size=10, bprop_len=10, repeat=False)
 
     updater = LSTM_updater(train_iter, optimizer, args.gpu)
-    trainer = training.Trainer(updater, (1000, 'epoch'), out = 'result')
+    trainer = training.Trainer(updater, (100, 'epoch'), out = 'result')
 
     eval_model = model.copy()
     eval_rnn = eval_model.predictor
@@ -130,8 +130,10 @@ def main():
                 ['epoch', 'main/loss', 'validation/main/loss']
                 )
             )
-    trainer.extend(extensions.ProgressBar())
+    trainer.extend(extensions.ProgressBar(update_interval=1))
     trainer.run()
+    chainer.serializers.save_npz('lstmmodel.model', model)
+    chainer.serializers.save_npz('lstmstate.state', optimizer)
 
 if __name__ == '__main__':
     main()
