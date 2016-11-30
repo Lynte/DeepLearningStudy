@@ -1,8 +1,26 @@
 [
     {
-        "iteration": 731,
-        "epoch": 1,
-        "main/loss": 139204992.0,
-        "validation/main/loss": 165004720.0
+        "main/loss": 4045811.3875,
+        "validation/main/loss": 40390552.44,
+        "iteration": 400,
+        "epoch": 1
+    },
+    {
+        "main/loss": 4043256.100625,
+        "validation/main/loss": 40380470.4,
+        "iteration": 800,
+        "epoch": 2
+    },
+    {
+        "main/loss": 4040852.856875,
+        "validation/main/loss": 40370444.6,
+        "iteration": 1200,
+        "epoch": 3
+    },
+    {
+        "main/loss": 4038446.043125,
+        "validation/main/loss": 40360438.04,
+        "iteration": 1600,
+        "epoch": 4
     }
 ]

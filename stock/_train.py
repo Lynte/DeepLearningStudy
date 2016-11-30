@@ -66,7 +66,7 @@ class LSTM_Iterator(chainer.dataset.Iterator):
 
     def get_data(self):
         tmp = [self.dataset[(offset + self.iteration) % len(self.dataset)]
-                for offset in self.offsets]
+               for offset in self.offsets]
         return np.array(tmp)
 
     def serialize(self, serializer):
@@ -115,6 +115,7 @@ def get_dataset(N, N_Loop):
 
     return np.ndarray(zip(x, y))
 
+
 def main():
     parser = argparse.ArgumentParser(description='stock prediction')
     parser.add_argument('--gpu', type=int, default=-1)
@@ -130,7 +131,7 @@ def main():
 
     #train = get_dataset(100, 3)
     #test = get_dataset(100, 3)
-    train, test = make_data('data/nikkei_225.csv', 'close', 0.8)
+    train, test = make_data('data/nikkei_225_10000.csv', 'close', 0.8)
 
     train_iter = LSTM_Iterator(train, batch_size=20)
     test_iter = LSTM_Iterator(test, batch_size=20, repeat=False)
