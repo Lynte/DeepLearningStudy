@@ -31,28 +31,29 @@ class LossFuncL(Chain):
 
 class LSTM_Iterator(chainer.dataset.Iterator):
 
-    def __init__(self, dataset, batch_size=10, bprop_len=5, repeat=True):
-        self.bprop_len = bprop_len
+    def __init__(self, dataset, batch_size=10, repeat=True):
         self.dataset = dataset
-        self.nsamples = len(dataset)
+        length = len(dataset)
         self.batch_size = batch_size
         self.repeat = repeat
 
         self.epoch = 0
         self.iteration = 0
 
-        self.offsets = [i * self.nsamples //
+        self.offsets = [i * length //
                         batch_size for i in range(batch_size)]
 
         self.is_new_epoch = False
 
     def __next__(self):
-        if not self.repeat and self.iteration * self.batch_size >= self.nsamples:
+        length = len(self.dataset)
+        if not self.repeat and self.iteration * self.batch_size >= length:
             raise StopIteration
-        x, t = self.get_data()
+        x = self.get_data()
         self.iteration += 1
+        t = self.get_data()
 
-        epoch = self.iteration * self.batch_size // self.nsamples
+        epoch = self.iteration * self.batch_size // length
         self.is_new_epoch = self.epoch < epoch
         if self.is_new_epoch:
             self.epoch = epoch
@@ -61,14 +62,12 @@ class LSTM_Iterator(chainer.dataset.Iterator):
 
     @property
     def epoch_detail(self):
-        return self.iteration * self.batch_size / self.nsamples
+        return self.iteration * self.batch_size / len(self.dataset)
 
     def get_data(self):
-        tmp0 = [self.dataset[(offset + self.iteration) % self.nsamples][1]
+        tmp = [self.dataset[(offset + self.iteration) % len(self.dataset)]
                 for offset in self.offsets]
-        tmp1 = [self.dataset[(offset + self.iteration + 1) % self.nsamples][1]
-                for offset in self.offsets]
-        return tmp0, tmp1
+        return np.array(tmp)
 
     def serialize(self, serializer):
         self.iteration = serializer('iteration', self.iteration)
@@ -77,10 +76,10 @@ class LSTM_Iterator(chainer.dataset.Iterator):
 
 class LSTM_updater(training.StandardUpdater):
 
-    def __init__(self, train_iter, optimizer, device):
+    def __init__(self, train_iter, optimizer, device, bprop_len=5):
         super(LSTM_updater, self).__init__(
             train_iter, optimizer, device=device)
-        self.bprop_len = train_iter.bprop_len
+        self.bprop_len = bprop_len
 
     def uptate_core(self):
         loss = 0
@@ -88,9 +87,11 @@ class LSTM_updater(training.StandardUpdater):
         train_iter = self.get_iterator('main')
         optimizer = self.get_optimizer('main')
 
-        for i in range(self.seq_length):
-            batch = np.array(train_iter.__next__()).astype(np.float32)
-            x, t = batch[:, 0].reshape((-1, 1)), batch[:, 1]
+        for i in range(self.bprop_len):
+            batch = train_iter.__next__()
+            #batch = np.array(train_iter.__next__()).astype(np.float32)
+            #x, t = batch[:, 0].reshape((-1, 1)), batch[:, 1]
+            x, t = self.converter(batch, self.device)
             loss += optimizer.target(chainer.Variable(x), chainer.Variable(t))
 
         optimizer.target.zerograds()
@@ -101,20 +102,21 @@ class LSTM_updater(training.StandardUpdater):
 
 def make_data(filename, dataname,  train_ratio):
     df = pd.read_csv(filename)
-    data = (df[dataname]).as_matrix()
+    data = np.asarray(df[dataname], dtype=np.float32)
     train_size = int(len(data) * train_ratio)
-    return list(enumerate(data[:train_size])), list(enumerate(data[train_size:]))
+    print(data.shape)
+
+    return np.split(data, [train_size])
 
 
 def get_dataset(N, N_Loop):
     x = np.linspace(0, 2 * np.pi * N_Loop, N)
     y = np.sin(x)
 
-    return list(zip(x, y))
-
+    return np.ndarray(zip(x, y))
 
 def main():
-    parser = argparse.ArgumentParser(description='learn sin wave')
+    parser = argparse.ArgumentParser(description='stock prediction')
     parser.add_argument('--gpu', type=int, default=-1)
     args = parser.parse_args()
 
@@ -130,11 +132,11 @@ def main():
     #test = get_dataset(100, 3)
     train, test = make_data('data/nikkei_225.csv', 'close', 0.8)
 
-    train_iter = LSTM_Iterator(train, batch_size=10, bprop_len=10)
-    test_iter = LSTM_Iterator(test, batch_size=10, bprop_len=10, repeat=False)
+    train_iter = LSTM_Iterator(train, batch_size=20)
+    test_iter = LSTM_Iterator(test, batch_size=20, repeat=False)
 
-    updater = LSTM_updater(train_iter, optimizer, args.gpu)
-    trainer = training.Trainer(updater, (100, 'epoch'), out='result')
+    updater = LSTM_updater(train_iter, optimizer, args.gpu, bprop_len=35)
+    trainer = training.Trainer(updater, (20, 'epoch'), out='result')
 
     eval_model = model.copy()
     eval_rnn = eval_model.predictor

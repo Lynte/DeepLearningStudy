@@ -1,0 +1,8 @@
+[
+    {
+        "iteration": 731,
+        "epoch": 1,
+        "main/loss": 139204992.0,
+        "validation/main/loss": 165004720.0
+    }
+]
